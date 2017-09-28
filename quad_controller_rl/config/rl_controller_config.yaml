@@ -1,0 +1,4 @@
+target: 10.0
+gamma: 0.9
+alpha: 0.1
+epsilon: 0.1

@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+
+"""ROS node for Reinforcement Learning controllers."""
+
+import math
+
+import rospy
+import tf
+from dynamic_reconfigure.server import Server
+
+from geometry_msgs.msg import Wrench
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
+from std_srvs.srv import SetBool
+
+from quad_controller_rl.rl_controller import RLController
+from quad_controller_rl.cfg import rl_controller_paramsConfig
+from quad_controller.srv import SetPose
+
+class RLControllerNode():
+    def __init__(self, node_name='rl_controller', num_episodes=1000, max_duration=5, update_rate=10):
+        # Set ROS node and environment params, initialize node
+        self.node_name = node_name
+        self.num_episodes = num_episodes
+        self.max_duration = max_duration  # secs
+        self.update_rate = update_rate  # Hz
+        rospy.init_node(self.node_name)
+
+        # Set RL params
+        target = float(rospy.get_param('target', '10.0'))
+        gamma = float(rospy.get_param('gamma', '0.9'))
+        alpha = float(rospy.get_param('alpha', '0.01'))
+        epsilon = float(rospy.get_param('epsilon', '0.1'))
+
+        # RL controller (agent)
+        self.controller = RLController(gamma=gamma, alpha=alpha, epsilon=epsilon)
+        self.controller.set_target(target)
+
+        # Other variables
+        self.episode = 0
+
+        # Enable dynamic reconfiguration (may callback)
+        self.config_server = Server(rl_controller_paramsConfig, self.config_callback)
+
+    def start(self):
+        # Wait till quad_rotor services are ready
+        rospy.wait_for_service('/quad_rotor/reset_orientation')
+        rospy.wait_for_service('/quad_rotor/set_pose')
+        self.reset()
+
+        # Set pub-sub topics and callbacks
+        self.pose_sub = rospy.Subscriber("/quad_rotor/pose", PoseStamped, self.pose_callback)
+        self.cmd_force_pub = rospy.Publisher("/quad_rotor/cmd_force", Wrench, queue_size=10)
+
+        # Run task for specified number of episodes
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            rate.sleep()
+
+    def reset(self):
+        self.start_time = None  # will be initialized on first pose callback
+        self.done = False
+        self.episode += 1
+        if self.episode > self.num_episodes:
+            rospy.signal_shutdown("Finished {} episodes".format(self.episode - 1))
+            return
+        print("RLControllerNode.start(): Episode {}".format(self.episode))
+
+        # Reset the forces and velocities on the quad
+        reset_force_vel = rospy.ServiceProxy('/quad_rotor/reset_orientation', SetBool)
+        reset_force_vel(True)
+        
+        # Reset position
+        set_position = rospy.ServiceProxy('/quad_rotor/set_pose', SetPose)
+        initial_pose = Pose()
+        initial_pose.position.z = 1.0
+        response = set_position(initial_pose)
+
+    def pose_callback(self, pose_msg):
+        # Extract timestamp, relative to when node was started
+        if self.start_time is None:
+            self.start_time = pose_msg.header.stamp
+        timestamp = (pose_msg.header.stamp - self.start_time).to_sec()
+
+        # Extract relevant components from pose data
+        position = pose_msg.pose.position.z
+        #rospy.loginfo("[{:7.3f}] RLControllerNode.pose_callback(): position = {}".format(timestamp, position))  # [debug]
+
+        # Call controller, get control action (z force)
+        cmd_force_z = self.controller.update(timestamp, position, self.done)
+
+        # Execute control action
+        if cmd_force_z is not None:
+            cmd = Wrench()
+            cmd.force.z = cmd_force_z
+            self.cmd_force_pub.publish(cmd)
+
+        # Check if we were done in the previous step (here, so that controller is called once with done=True)
+        if self.done:
+            self.reset()
+        else:
+            # Test for episode completion
+            self.done = timestamp > self.max_duration
+
+    def config_callback(self, config, level):
+        rospy.loginfo("RLControllerNode.config_callback(): {target}, {gamma}, {alpha}, {epsilon}".format(**config))  # [debug]
+        self.controller.set_params(gamma=config.gamma, alpha=config.alpha, epsilon=config.epsilon)
+        self.controller.set_target(config.target)
+        return config
+
+
+if __name__ == '__main__':
+    try:
+        node = RLControllerNode()
+        node.start()
+    except rospy.ROSInterruptException: 
+        pass
