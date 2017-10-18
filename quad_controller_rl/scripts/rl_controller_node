@@ -15,7 +15,7 @@ from std_srvs.srv import SetBool
 
 from quad_controller_rl.rl_controller import RLController
 from quad_controller_rl.cfg import rl_controller_paramsConfig
-from quad_controller.srv import SetPose
+from quad_controller_rl.srv import SetPose
 
 class RLControllerNode():
     def __init__(self, node_name='rl_controller', num_episodes=1000, max_duration=5, update_rate=10):
