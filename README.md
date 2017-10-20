@@ -24,14 +24,19 @@ Download the compressed VM disk image and unzip it:
 - Compressed VM Disk Image: [RoboVM_V2.1.0.zip](https://s3-us-west-1.amazonaws.com/udacity-robotics/Virtual+Machines/Lubuntu_071917/RoboVM_V2.1.0.zip)
 - MD5 checksum: `MD5(Ubuntu 64-bit Robo V2.1.0.ova)= 95bfba89fbdac5f2c0a2be2ae186ddbb`
 
-You will need a Virtual Machine player to run the VM, such as VMWare or VirtualBox. We recommend using [VMWare](http://www.vmware.com/). Open your VM player, and then "Open" / "Import" the VM disk image that you just unzipped (there are two other small configuration files in the zip archive that you may or may not need).
+You will need a Virtual Machine player to run the VM, such as VMWare or VirtualBox:
+
+- [VMWare](http://www.vmware.com/): If you use a Windows/Linux system, you can get [Workstation Player](https://www.vmware.com/products/workstation-player.html) for free, or if you're on a Mac, you can get a trial of [Fusion](https://www.vmware.com/products/fusion.html).
+- [VirtualBox](https://www.virtualbox.org/): Download and install the appropriate version for your system.
+
+Open your VM player, and then "Open" / "Import" the VM disk image that you just unzipped (the `.ova` file).
 
 Configure the settings for your VM to allocate at least 2 processors and 4GB of RAM (more the merrier!). Now launch the VM, and follow the on-screen instructions for one-time setup steps.
 
-- Username: `robo`
+- Username: `robond`
 - Password: `robo-nd`
 
-To open a terminal in your VM, press `Ctrl+Alt+T` (or `Ctrl+Option+T` on a Mac). This is where you will be able to execute your project code.
+To open a terminal in your VM, press `Ctrl+Alt+T`. If prompted "Do you want to source ROS?", answer `y` (yes). This is where you will execute your project code.
 
 ## ROS Native Install
 
@@ -44,15 +49,17 @@ _Note: This method is not supported by Udacity. If you have trouble performing a
 
 ## Project Code
 
-Clone this repository or download it where you have installed ROS (on the VM, or your local machine). This is where you will develop your project code. If you're using a VM, you can also share a folder on your file-system between the host and VM. That might make it easier for you to prepare your report and submit your project for review.
+On the machine where you have installed ROS (a VM, or your local machine), create a directory named `catkin_ws`, and inside it create a subdirectory named `src`. If you're using a VM, you can also share a folder on your file-system between the host and VM. That might make it easier for you to prepare your report and submit your project for review.
 
-Wherever you download the code, we recommend the following folder structure (ROS has a fairly complicated build system, as you will see!):
+Now clone this repository or download it inside the `src` directory. This is where you will develop your project code. Your folder structure should look like the following (ROS has a fairly complicated build system, as you will see!):
 
+```
 - ~/catkin_ws/
   - src/
     - RL-Quadcopter/
       - quad_controller_rl/
         - ...
+```
 
 The root of this structure (`catkin_ws`) is a [catkin workspace](http://wiki.ros.org/catkin/workspaces), which you can use to organize and work on all your ROS-based projects (the name `catkin_ws` is not mandatory - you can change it to anything you want).
 
@@ -60,15 +67,38 @@ The root of this structure (`catkin_ws`) is a [catkin workspace](http://wiki.ros
 
 Download the Udacity Quadcopter Simulator, nicknamed **DroneSim**, for your host computer OS [here](https://github.com/udacity/RoboND-Controls-Lab/releases). 
 
-_Note: If you are running ROS in a Virtual Machine (VM), you cannot use the simulator inside the VM. You have to use the simulator for your host operating system and connect it to your VM (see below)._
+To start the simulator, simply run the downloaded executable file. You may need to run the simulator _after_ the `roslaunch` step mentioned below in the Run section, so that it can connect to a running ROS master.
 
-### Using the Simulator
+_Note: If you are using a Virtual Machine (VM), you cannot run the simulator inside the VM. You have to download and run the simulator for your **host operating system** and connect it to your VM (see below)._
 
-If using the VM, inside the simulator's `_data` or `/Contents` folder, edit `ros_settings.txt` and set `vm-ip` to the VM's IP address and set `vm-override` to `true`. If not using a VM, no edit is necessary.
+### Connecting the Simulator to a VM
 
-To find the ip of your VM, type `echo $(hostname -I)` into a terminal of your choice. Be aware that the ip address of your VM can change. If you are experiencing problems, be sure to check that the VM's ip matches that of which you have in `ros_settings.txt`.
+If you are running ROS in a VM, there are a couple of steps necessary to make sure it can communicate with the simulator running on your host system. If not using a VM, these steps are not needed.
 
-To start the simulator, simply run the downloaded executable file.
+#### Enable Networking on VM
+
+- **VMWare**: The default setting should work. To verify, with the VM runnning, go to the Virtual Machine menu > Network Adapter. NAT should be selected.
+- **VirtualBox**:
+  1. In the VirtualBox Manager, go to Global Tools (top-right corner) > Host Network Manager.
+  2. Create a new Host-only Network. You can leave the default settings, e.g. Name = "vboxnet0", Ipv4 Address/Mask = "192.168.56.1/24", and DHCP Server enabled.
+  3. Switch back to Machine Tools, and with your VM selected, open its Settings.
+  4. Go to the Network tab, change "Attached to" (network type) to "Host-only Adapter", and pick "vboxnet0" from the "Name" dropdown.
+  5. Hit Ok to save, and (re)start the VM.
+
+#### Obtain IP Addresses for Host and VM
+
+In a terminal on your host computer, run `ifconfig`. It will list all the network interfaces available, both physical and virtual. There should be one named something like `vmnet` or `vboxnet`. Note the IP address (`inet` or `inet addr`) mentioned for that interface, e.g. `192.168.56.1`. This is your **Host IP address**.
+
+Do the same inside the VM. Here the interface may have a different name, but the IP address should have a common prefix. Note down the complete IP address, e.g. `192.168.56.101` - this your **VM IP address**.
+
+#### Edit Simulator Settings
+
+Inside the simulator's `_Data` or `/Contents` folder (on Mac, right-click the app > Show Package Contents), edit `ros_settings.txt`:
+
+- Set `vm-ip` to the **VM IP address** and set `vm-override` to `true`.
+- Set `host-ip` to the **Host IP address** and set `host-override` to `true`.
+
+The host and/or VM's IP address can change when it is restarted. If you are experiencing connectivity problems, be sure to check that the actual IP addresses match what you have in `ros_settings.txt`.
 
 
 # Develop
