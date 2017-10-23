@@ -1,11 +1,14 @@
 <launch>
+    <!-- Command-line args; e.g. task:=Hover agent:=TRPO -->
+    <arg name="task" default="Takeoff" doc="Task to run, a subclass of BaseTask" />
+    <arg name="agent" default="RandomPolicySearch" doc="Agent to execute task, a subclass of BaseAgent" />
+    <arg name="sim" default="$(find quad_controller_rl)/sim/DroneSim" doc="Full path/command to run simulator (must be an executable)" />
 
-    <node name="rl_controller" pkg="quad_controller_rl" type="rl_controller_node" output="screen" >
-    	<rosparam command="load" file="$(find quad_controller_rl)/config/rl_controller_config.yaml" />
-    </node>
+    <!-- Parameters; access in code, e.g. rospy.get_param('task') -->
+    <param name="task" value="$(arg task)" />
+    <param name="agent" value="$(arg agent)" />
 
-    <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" />
-
-    <node name="drone_sim" pkg="quad_controller_rl" type="drone_sim" />
-
+    <!-- ROS nodes (processes) to launch -->
+    <node name="rl_controller" pkg="quad_controller_rl" type="rl_controller_node" output="screen" />
+    <node name="drone_sim" pkg="quad_controller_rl" type="drone_sim" args="$(arg sim)" />
 </launch>

@@ -9,23 +9,16 @@ project(quad_controller_rl)
 # add_definitions(-std=c++11)
 
 ##################
-## Dependencies ##
+## Catkin Tools ##
 ##################
 
 ## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED
-  rospy
   message_generation
   std_msgs
   geometry_msgs
-  nav_msgs
-  dynamic_reconfigure
+  std_srvs
 )
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 
 ##################
 ## Python setup ##
@@ -40,35 +33,29 @@ catkin_python_setup()
 ## Declare ROS messages, services and actions ##
 ################################################
 
-## Generate messages in the 'msg' folder
+## Add messages to generate, defined in the 'msg' folder
 # add_message_files(
 #   FILES
 #   EulerAngles.msg
 # )
 
-## Generate services in the 'srv' folder
+## Add services to generate, defined in the 'srv' folder
 add_service_files(
   FILES
-#   SetFloat.srv
-#   SetInt.srv
   SetPose.srv
-#   SetPath.srv
-#   GetPath.srv
 )
 
-## Generate actions in the 'action' folder
+## Add actions to generate, defined in the 'action' folder
 # add_action_files(
 #   FILES
 #   Action1.action
-#   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
+## Generate added messages and services, with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
   geometry_msgs
-#   nav_msgs
+  std_srvs
 )
 
 ################################################
@@ -76,25 +63,23 @@ generate_messages(
 ################################################
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-  cfg/rl_controller_params.cfg
-)
+# generate_dynamic_reconfigure_options(
+#   cfg/params.cfg
+# )
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
+#################################
+## Generate CMake config files ##
+#################################
 ## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
+## INCLUDE_DIRS: uncomment this if your package contains header files
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES quad_controller_rl
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
   DEPENDS message_runtime
+  DEPENDS std_msgs
+  DEPENDS geometry_msgs
+  DEPENDS std_srvs
 )
 
 ###########
@@ -117,4 +102,4 @@ catkin_package(
 #############
 
 ## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+# catkin_add_nosetests(tests)
