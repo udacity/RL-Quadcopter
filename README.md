@@ -103,10 +103,7 @@ The host and/or VM's IP address can change when it is restarted. If you are expe
 
 # Develop
 
-Starter code is provided in `quad_controller_rl/src/`:
-
-- `rl_controller.py`: The controller gets raw position data from the simulation, prepares the state representation and reward, supplies them to the agent and passes back the agent's actions to the simulation.
-- `rl_agent.py`: The agent is where you will implement your reinforcement learning algorithm. A sample agent is provided, which tries to learn using stochastic policy search (but performs very poorly!).
+Starter code is provided in `quad_controller_rl/` with all the Python modules (`.py` files) under the `src/quad_controller_rl/` package, and the main project notebook under `notebooks/`. Take a look at the files there, but you do not have to make any changes to the code at this point. Complete the following two steps first (**Build** and **Run**), to ensure your ROS installation is working correctly.
 
 ## Build
 
@@ -142,27 +139,27 @@ You should see a few messages on the terminal as different nodes get spun up. No
 
 Tip: If you get tired of this two-step startup process, edit the `quad_controller_rl/scripts/drone_sim` script and enter a command that runs the simulator application. It will then be launched automatically with ROS!
 
-_Note: If you want to learn more about how ROS works and how you can use it for robotics applications, you can take the [ROS Essentials](https://classroom.udacity.com/nanodegrees/nd209/parts/af07ae99-7d69-4b45-ab98-3fde8b576a16) module from Udacity's [Robotics Nanodegree Program](https://www.udacity.com/robotics)._
+_Note: If you want to learn more about how ROS works and how you can use it for robotics applications, you may enroll in Udacity's [Robotics Nanodegree Program](https://www.udacity.com/robotics) and can take the [ROS Essentials](https://classroom.udacity.com/nanodegrees/nd209/parts/af07ae99-7d69-4b45-ab98-3fde8b576a16) module._
 
 ## Implement
 
-Once you have made sure ROS and the simulator are running without any errors, and that they can communicate with each other, start modifying your code in `rl_agent.py`. Every time you make a change, you will need to stop the simulator (press `Esc` with the simulator window active), and shutdown ROS (press `Ctrl+C` in the terminal). Save your change, and `roslaunch` again.
+Once you have made sure ROS and the simulator are running without any errors, and that they can communicate with each other, try modifying the code in `agents/policy_search.py` - this is a sample agent that runs by default (e.g. add a `print` statement). Every time you make a change, you will need to stop the simulator (press `Esc` with the simulator window active), and shutdown ROS (press `Ctrl+C` in the terminal). Save your change, and `roslaunch` again.
 
-While you are working on your agent code, open the project notebook for guidance (assuming you are in your catkin workspace):
+Now you should be ready to start coding! Open the project notebook for further instructions (assuming you are in your catkin workspace):
 
 ```bash
 $ jupyter notebook src/RL-Quadcopter/quad_controller_rl/notebooks/RL-Quadcopter.ipynb
 ```
 
-
 # Submit
 
-Complete the required sections in the notebook. Once done, save/export the notebook as a PDF (`RL-Quadcopter.pdf`). This will serve as your project report.
+Complete the required sections in the notebook. Once done, save/export the notebook as a PDF or HTML file. This will serve as your project report.
 
-If you are enrolled in a Udacity program, you can submit your completed project for review. You can upload a zip file that includes the following:
+If you are enrolled in a Udacity Nanodegree program, you can submit your completed project for review. Prepare and upload a zip file that includes the following:
 
-- Project notebook with all sections completed (`RL-Quadcopter.ipynb`).
-- PDF report (`RL-Quadcopter.pdf`, which can be an export of the notebook).
-- Agent code (`rl_agent.py`).
-- Controller code (`rl_controler.py`).
-- Any other supporting code or other files used by your project (e.g. you can write different agents in separate files).
+- `RL-Quadcopter.ipynb`: Project notebook with all sections completed.
+- `RL-Quadcopter.pdf` / `RL-Quadcopter.html`: PDF or HTML report (which can be an export of the notebook).
+- `quad_controller_rl/`: Python package with your code in the following sub-packages:
+  - `tasks/`: Your implementation of each task required for this project.
+  - `agents/`: Agents you've implemented for the corresponding tasks.
+  - Any other supporting code or other files used by your project.
