@@ -63,6 +63,16 @@ Now clone this repository or download it inside the `src` directory. This is whe
 
 The root of this structure (`catkin_ws`) is a [catkin workspace](http://wiki.ros.org/catkin/workspaces), which you can use to organize and work on all your ROS-based projects (the name `catkin_ws` is not mandatory - you can change it to anything you want).
 
+## Python Packages
+
+Install the Python packages necessary for this project, listed in `requirements.txt`:
+
+```bash
+$ pip3 install -r requirements.txt
+```
+
+You may need some additional packages, depending on what framework or library you intend to use, e.g. TensorFlow, Keras, PyTorch, etc. Now is a good time to ensure you have these installed.
+
 ## Simulator
 
 Download the Udacity Quadcopter Simulator, nicknamed **DroneSim**, for your host computer OS [here](https://github.com/udacity/RoboND-Controls-Lab/releases). 
