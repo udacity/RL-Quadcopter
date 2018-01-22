@@ -36,6 +36,7 @@ class RandomPolicySearch(BaseAgent):
     def step(self, state, reward, done):
         # Transform state vector
         state = (state - self.task.observation_space.low) / self.state_range  # scale to [0.0, 1.0]
+        state = state.reshape(1, -1)  # convert to row vector
 
         # Choose an action
         action = self.act(state)

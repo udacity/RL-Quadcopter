@@ -42,7 +42,7 @@ class Takeoff(BaseTask):
         # Prepare state vector (pose only; ignore angular_velocity, linear_acceleration)
         state = np.array([
                 pose.position.x, pose.position.y, pose.position.z,
-                pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]).reshape(1, -1)
+                pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
 
         # Compute reward / penalty and check if this episode is complete
         done = False
