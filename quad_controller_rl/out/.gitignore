@@ -1,0 +1,3 @@
+# Don't check in output files
+*
+!.gitignore
