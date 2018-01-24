@@ -26,7 +26,7 @@ Download the compressed VM disk image and unzip it:
 
 You will need a Virtual Machine player to run the VM, such as VMWare or VirtualBox:
 
-- [VMWare](http://www.vmware.com/): If you use a Windows/Linux system, you can get [Workstation Player](https://www.vmware.com/products/workstation-player.html) for free, or if you're on a Mac, you can get a trial of [Fusion](https://www.vmware.com/products/fusion.html).
+- [VMWare](http://www.vmware.com/): If you use a Windows/Linux system, you can get [Workstation Player](https://www.vmware.com/products/workstation-player/workstation-player-evaluation.html) for free, or if you're on a Mac, you can get a trial of [Fusion](https://www.vmware.com/products/fusion.html).
 - [VirtualBox](https://www.virtualbox.org/): Download and install the appropriate version for your system.
 
 Open your VM player, and then "Open" / "Import" the VM disk image that you just unzipped (the `.ova` file).
