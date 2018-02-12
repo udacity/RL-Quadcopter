@@ -27,7 +27,7 @@ Download the compressed VM disk image and unzip it:
 You will need a Virtual Machine player to run the VM, such as VMWare or VirtualBox:
 
 - [VMWare](http://www.vmware.com/): If you use a Windows/Linux system, you can get [Workstation Player](https://www.vmware.com/products/workstation-player/workstation-player-evaluation.html) for free, or if you're on a Mac, you can get a trial of [Fusion](https://www.vmware.com/products/fusion.html).
-- [VirtualBox](https://www.virtualbox.org/): Download and install the appropriate version for your system.
+- [VirtualBox](https://www.virtualbox.org/): Download and install the appropriate version for your system.  On a Mac, you will most likely need to update security settings to allow for a proper installation, as you may otherwise have issues with the Kernal drivers not being installed.  When installing VitualBox, follow the directions [here](https://apple.stackexchange.com/questions/300510/virtualbox-5-1-8-installation-didnt-install-kernel-extensions-how-do-i-fix-thi), and allow 'Oracle America' to load inside of Preferences > Security & Privacy > General.
 
 Open your VM player, and then "Open" / "Import" the VM disk image that you just unzipped (the `.ova` file).
 
@@ -51,7 +51,21 @@ _Note: This method is not supported by Udacity. If you have trouble performing a
 
 On the machine where you have installed ROS (a VM, or your local machine), create a directory named `catkin_ws`, and inside it create a subdirectory named `src`. If you're using a VM, you can also share a folder on your file-system between the host and VM. That might make it easier for you to prepare your report and submit your project for review.
 
-Now clone this repository or download it inside the `src` directory. This is where you will develop your project code. Your folder structure should look like the following (ROS has a fairly complicated build system, as you will see!):
+
+Now clone this repository or download it inside the `src` directory. This is where you will develop your project code. 
+
+So, to do the above, inside the VM terminal:
+
+```bash
+$ cd ~
+$ mkdir catkin_ws
+$ cd catkin_ws
+$ mkdir src
+$ cd src
+$ git clone https://github.com/udacity/RL-Quadcopter.git
+```
+
+Your folder structure should look like the following (ROS has a fairly complicated build system, as you will see!):
 
 ```
 - ~/catkin_ws/
@@ -65,7 +79,14 @@ The root of this structure (`catkin_ws`) is a [catkin workspace](http://wiki.ros
 
 ## Python Packages
 
-Install the Python packages necessary for this project, listed in `requirements.txt`:
+First, install `pip3`:
+
+```bash
+$ sudo apt-get update
+$ sudo apt-get -y install python3-pip
+```
+
+Next, install the Python packages necessary for this project, listed in `requirements.txt`:
 
 ```bash
 $ pip3 install -r requirements.txt
@@ -89,7 +110,7 @@ If you are running ROS in a VM, there are a couple of steps necessary to make su
 
 - **VMWare**: The default setting should work. To verify, with the VM runnning, go to the Virtual Machine menu > Network Adapter. NAT should be selected.
 - **VirtualBox**:
-  1. In the VirtualBox Manager, go to Global Tools (top-right corner) > Host Network Manager.
+  1. In the VirtualBox Manager, go to Global Tools (top-right corner, above the penguin) > Host Network Manager.
   2. Create a new Host-only Network. You can leave the default settings, e.g. Name = "vboxnet0", Ipv4 Address/Mask = "192.168.56.1/24", and DHCP Server enabled.
   3. Switch back to Machine Tools, and with your VM selected, open its Settings.
   4. Go to the Network tab, change "Attached to" (network type) to "Host-only Adapter", and pick "vboxnet0" from the "Name" dropdown.
@@ -142,12 +163,14 @@ $ source devel/setup.bash
 To run your project, start ROS with the `rl_controller.launch` file:
 
 ```bash
+$ cd ~/catkin_ws/src/RL-Quadcopter/quad_controller_rl/launch
 $ roslaunch quad_controller_rl rl_controller.launch
 ```
 
 You should see a few messages on the terminal as different nodes get spun up. Now you can run the simulator, which is a separate Unity application (note that you must start ROS first, and then run the simulator). Once the simulator initializes itself, you should start seeing additional messages in your ROS terminal, indicating a new episode starting every few seconds. The quadcopter in the simulation should show its blades running as it gets control inputs from the agent, and it should reset at the beginning of each episode.
 
-Tip: If you get tired of this two-step startup process, edit the `quad_controller_rl/scripts/drone_sim` script and enter a command that runs the simulator application. It will then be launched automatically with ROS!
+
+Tip: By defaults, you will need to follow the steps for build and run each time that you wish to run your quadcopter simulation.  If you get tired of this two-step startup process, edit the `quad_controller_rl/scripts/drone_sim` script and enter a command that runs the simulator application. (An example can be found [here](https://discussions.udacity.com/t/importerror-when-running-roslaunch-quad-controller-rl-rl-controller-launch/569530/2).  It will then be launched automatically with ROS!
 
 _Note: If you want to learn more about how ROS works and how you can use it for robotics applications, you may enroll in Udacity's [Robotics Nanodegree Program](https://www.udacity.com/robotics) and can take the [ROS Essentials](https://classroom.udacity.com/nanodegrees/nd209/parts/af07ae99-7d69-4b45-ab98-3fde8b576a16) module._
 
