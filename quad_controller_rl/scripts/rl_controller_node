@@ -14,15 +14,23 @@ from quad_controller_rl.tasks.base_task import BaseTask
 from quad_controller_rl.agents.base_agent import BaseAgent
 from quad_controller_rl.srv import SetPose
 
+from sim import Sim
+
+def all_subclasses(cls):
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in all_subclasses(s)]
 def get_subclass(cls, name):
     """Return a concrete subclass by name (classmethod)."""
-    types = {t.__name__: t for t in cls.__subclasses__()}
+    types = {t.__name__: t for t in all_subclasses(cls)}
     assert name in types, "Unknown type '{}' (must be a subclass of {})".format(name, cls.__name__)
     return types[name]
 
 class RLControllerNode:
-    def __init__(self, name='rl_controller', num_episodes=10000, update_rate=30, transient_period=0.1):
+    def __init__(self, name='rl_controller', num_episodes=10000, update_rate=30, transient_period=0.5):
         # Set ROS node and environment params, initialize node
+        self.shithappens = False
+        self.errcount = 0
+        self.waittime = None
         self.state = 'INIT'  # one of ['INIT', 'RESET', 'EPISODE']; to keep track of current state
         self.name = name  # to identify this ROS node
         self.num_episodes = num_episodes  # max no. of episodes to run for
@@ -41,20 +49,29 @@ class RLControllerNode:
         rospy.loginfo("RLControllerNode[{}]: agent = {}".format(self.state, agent_name))  # [debug]
         self.agent = get_subclass(BaseAgent, agent_name)(self.task)  # needs a reference to task
         self.task.set_agent(self.agent)
+        
+        # Choose Sim
+        self.goodsim = (rospy.get_param('goodsim') == 'yes')
+        rospy.loginfo("RLControllerNode[{}]: Use good sim? {}".format(self.state, self.goodsim))  # [debug]
+        self.sim = Sim()
 
         # Other variables
         self.episode = 0
 
     def start(self):
-        # Wait till quad_rotor services are ready
-        rospy.wait_for_service('/quad_rotor/reset_orientation')
-        rospy.wait_for_service('/quad_rotor/set_pose')
+        print("Starting up YAY!")
+        if (self.goodsim):
+            pass
+        else:
+            # Wait till quad_rotor services are ready
+            rospy.wait_for_service('/quad_rotor/reset_orientation')
+            rospy.wait_for_service('/quad_rotor/set_pose')
 
-        # Set pub-sub topics and callbacks
-        self.pose_sub = rospy.Subscriber("/quad_rotor/pose", PoseStamped, self.sub_callback, queue_size=1)  # latest message only
-        self.imu_sub = rospy.Subscriber("/quad_rotor/imu", Imu, self.sub_callback, queue_size=1)  # latest message only
-        self.cmd_vel_pub = rospy.Publisher("/quad_rotor/cmd_vel", Twist, queue_size=1)
-        self.cmd_force_pub = rospy.Publisher("/quad_rotor/cmd_force", Wrench, queue_size=10)
+            # Set pub-sub topics and callbacks
+            self.pose_sub = rospy.Subscriber("/quad_rotor/pose", PoseStamped, self.sub_callback, queue_size=1)  # latest message only
+            self.imu_sub = rospy.Subscriber("/quad_rotor/imu", Imu, self.sub_callback, queue_size=1)  # latest message only
+            self.cmd_vel_pub = rospy.Publisher("/quad_rotor/cmd_vel", Twist, queue_size=1)
+            self.cmd_force_pub = rospy.Publisher("/quad_rotor/cmd_force", Wrench, queue_size=10)
 
         # Reset to begin first episode
         self.reset()
@@ -63,52 +80,77 @@ class RLControllerNode:
         self.loop()
 
     def loop(self):
-        # Run till shutdown is signalled
-        rate = rospy.Rate(self.update_rate)  # update task periodically
-        while not rospy.is_shutdown():
-            rate.sleep()  # handle events, callbacks
-
-            # Update task, get control action (force command) and whether this episode is done
-            if self.timestamp and self.pose and self.angular_velocity and self.linear_acceleration:
-                rospy.logdebug("RLControllerNode[{}]: t = {}".format(self.state, self.timestamp))
-                cmd, done = self.task.update(self.timestamp, self.pose, self.angular_velocity, self.linear_acceleration)
+        if (self.goodsim):
+            while (self.episode <= self.num_episodes):
+                timestamp, pose, angular_velocity, linear_acceleration = self.sim.get_state()
+                cmd, done = self.task.update(timestamp, pose, angular_velocity, linear_acceleration)
                 if done:
                     # If done, reset to begin next episode
                     self.reset()
                 elif cmd is not None:
                     # Else, execute control action
-                    self.cmd_force_pub.publish(cmd)
+                    self.sim.process_action(cmd)
+
+        else:
+            # Run till shutdown is signalled
+            rate = rospy.Rate(self.update_rate)  # update task periodically
+            self.waittime = time.time()
+            while not rospy.is_shutdown():
+                rate.sleep()  # handle events, callbacks
+
+                # Update task, get control action (force command) and whether this episode is done
+                if self.timestamp and self.pose and self.angular_velocity and self.linear_acceleration:
+                    self.waittime = time.time()
+                    rospy.logdebug("RLControllerNode[{}]: t = {}".format(self.state, self.timestamp))
+                    cmd, done = self.task.update(self.timestamp, self.pose, self.angular_velocity, self.linear_acceleration)
+                    if done:
+                        # If done, reset to begin next episode
+                        self.reset()
+                    elif cmd is not None:
+                        # Else, execute control action
+                        self.cmd_force_pub.publish(cmd)
+
+                waiting = time.time() - self.waittime
+                if (waiting > 20):
+                    self.shithappens = True
+                    print ("EMERGENCY! SIMULATOR HAS DIED!")
+                    self.waittime = time.time()
+                    self.reset()
 
     def reset(self):
         self.state = 'RESET'
 
         # Reset task and set initial conditions
         initial_pose, initial_velocity = self.task.reset()
-
-        reset_orientation = rospy.ServiceProxy('/quad_rotor/reset_orientation', SetBool)
-        reset_orientation(True)  # reset orientation, velocity, force
         
-        set_pose = rospy.ServiceProxy('/quad_rotor/set_pose', SetPose)
-        set_pose(initial_pose)  # set initial pose
+        if (self.goodsim):
+            self.sim.set_state(initial_pose, initial_velocity)
+        else:
+            reset_orientation = rospy.ServiceProxy('/quad_rotor/reset_orientation', SetBool)
+            reset_orientation(True)  # reset orientation, velocity, force
 
-        if initial_velocity is not None:
-            self.cmd_vel_pub.publish(initial_velocity)  # set initial velocity
+            set_pose = rospy.ServiceProxy('/quad_rotor/set_pose', SetPose)
+            set_pose(initial_pose)  # set initial pose
 
-        time.sleep(self.transient_period)  # wait for reset requests to settle
+            if initial_velocity is not None:
+                self.cmd_vel_pub.publish(initial_velocity)  # set initial velocity
 
-        # Start a new episode (None values will be initialized on first callback)
-        self.start_time = None
-        self.timestamp = None
-        self.pose = None
-        self.angular_velocity = None
-        self.linear_acceleration = None
-        self.episode += 1
-        if self.episode > self.num_episodes:
-            shutdown_reason = "RLControllerNode[{}]: Finished {} episodes".format(self.state, self.episode - 1)
-            rospy.loginfo(shutdown_reason)  # [debug]
-            rospy.signal_shutdown("shutdown_reason")
-            return
-        rospy.loginfo("RLControllerNode[{}]: Episode {}".format(self.state, self.episode))  # [debug]
+            time.sleep(self.transient_period)  # wait for reset requests to settle
+
+            # Start a new episode (None values will be initialized on first callback)
+            self.start_time = None
+            self.timestamp = None
+            self.pose = None
+            self.angular_velocity = None
+            self.linear_acceleration = None
+            self.episode += 1
+            if self.episode > self.num_episodes:
+                print("SHUTDOWN")
+                shutdown_reason = "RLControllerNode[{}]: Finished {} episodes".format(self.state, self.episode - 1)
+                rospy.loginfo(shutdown_reason)  # [debug]
+                rospy.signal_shutdown("shutdown_reason")
+                return
+            rospy.loginfo("RLControllerNode[{}]: Episode {}".format(self.state, self.episode))  # [debug]
 
         self.state = 'EPISODE'
 
@@ -132,6 +174,8 @@ class RLControllerNode:
                         rospy.logwarn("RLControllerNode[{}]: Unknown message type: '{}'".format(self.state, msg._type))
             finally:
                 self.sub_callback_lock.release()
+        else:
+            print ("YO ITS LOCKED!")
 
 
 if __name__ == '__main__':
